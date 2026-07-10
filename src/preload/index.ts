@@ -5,6 +5,8 @@ import { electronAPI } from '@electron-toolkit/preload'
 const api = {
   getProxy: () => ipcRenderer.invoke("proxy"),
   getProxyServer: () => ipcRenderer.invoke("proxy-server"),
+  getVpn: () => ipcRenderer.invoke("vpn"),
+  getDns: () => ipcRenderer.invoke("dns"),
 }
 
 // Use `contextBridge` APIs to expose Electron APIs to

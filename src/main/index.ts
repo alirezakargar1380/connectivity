@@ -3,6 +3,31 @@ import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
 import { execFile } from 'child_process'
+import os from 'node:os';
+
+function getDns(interfaceName: string): Promise<string[]> {
+  return new Promise((resolve, reject) => {
+    execFile(
+      "netsh",
+      ["interface", "ip", "show", "dns", interfaceName],
+      (error, stdout, stderr) => {
+        if (error) {
+          reject(error);
+          return;
+        }
+
+        if (stderr) {
+          reject(new Error(stderr));
+          return;
+        }
+
+        const dns = stdout.match(/\b\d{1,3}(?:\.\d{1,3}){3}\b/g) ?? [];
+
+        resolve(dns);
+      }
+    );
+  });
+}
 
 function createWindow(): void {
   // Create the browser window.
@@ -71,6 +96,15 @@ app.whenReady().then(() => {
       );
     });
   })
+  ipcMain.handle('dns', async () => {
+    const wifi = await getDns("Wi-Fi");
+    const ethernet = await getDns("vEthernet (Default Switch)");
+
+    return {
+      wifi,
+      ethernet,
+    };
+  })
   ipcMain.handle('proxy-server', () => {
     return new Promise((resolve, reject) => {
       execFile(
@@ -89,6 +123,9 @@ app.whenReady().then(() => {
         }
       );
     });
+  })
+  ipcMain.handle('vpn', () => {
+    console.log(os.networkInterfaces())
   })
 
   createWindow()

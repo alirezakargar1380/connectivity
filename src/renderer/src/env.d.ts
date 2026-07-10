@@ -6,6 +6,8 @@ declare global {
     api: {
       getProxy(): Promise<boolean>;
       getProxyServer(): Promise<string>;
+      getVpn(): Promise;
+      getDns(): Promise;
     };
   }
 }
