@@ -4,6 +4,7 @@ import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
 import { execFile } from 'child_process'
 import os from 'node:os';
+import { InternetConnectionChecker } from './../utils/internet';
 
 function getDns(interfaceName: string): Promise<string[]> {
   return new Promise((resolve, reject) => {
@@ -23,11 +24,64 @@ function getDns(interfaceName: string): Promise<string[]> {
 
         const dns = stdout.match(/\b\d{1,3}(?:\.\d{1,3}){3}\b/g) ?? [];
 
-        resolve(dns);
+        resolve(stdout.includes('DNS Servers:') ? dns : []);
       }
     );
   });
 }
+
+const checker = new InternetConnectionChecker({
+  timeout: 1000,
+  verbose: true,
+  testUrls: [
+    'https://www.google.com',
+    // 'https://www.cloudflare.com'
+  ],
+  // dnsServers: ['8.8.8.8']
+});
+
+ipcMain.handle('check-internet', async () => {
+    try {
+        const result = await checker.checkConnection();
+        return result;
+    } catch (error: any) {
+        return {
+            hasInternet: false,
+            error: error.message
+        };
+    }
+});
+
+ipcMain.handle('get-connection-info', async () => {
+    return await checker.getConnectionInfo();
+});
+
+ipcMain.handle('is-connected', async () => {
+  try {
+    const result = await checker.isConnected();
+    return result;
+  } catch (error: any) {
+    return {
+      hasInternet: false,
+      error: error.message
+    };
+  }
+});
+
+ipcMain.handle('start-monitoring', async (event, interval: number = 5000) => {
+    const stop = checker.monitorConnection(interval, (connected, details) => {
+        event.sender.send('internet-status', { connected, details });
+    });
+    
+    // Store the stop function to use later
+    // You might want to store this in a Map with the sender ID
+    return { success: true };
+});
+
+
+// ipcMain.handle('get-connection-info', async () => {
+//     return await checker.getConnectionInfo();
+// });
 
 let mainWindow: BrowserWindow
 
@@ -102,6 +156,7 @@ app.whenReady().then(() => {
   ipcMain.on('ping', () => console.log('pong'))
   ipcMain.on('clickable', () => mainWindow.setIgnoreMouseEvents(true, { forward: true }))
   ipcMain.on('not-clickable', () => mainWindow.setIgnoreMouseEvents(false))
+  ipcMain.handle('delete-dns', (event, interfaceName: string) => { console.log(interfaceName) })
   ipcMain.handle('proxy', () => {
     return new Promise((resolve, reject) => {
       execFile(

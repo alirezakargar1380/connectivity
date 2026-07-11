@@ -13,7 +13,7 @@ body {
   /* user-select: none; */
 }
 
-@keyframes blur-loop {
+@keyframes green-loop {
   0% {
     box-shadow: 0px 0px 17px 1px #00ff2a;
     /* blur 0 */
@@ -21,6 +21,42 @@ body {
 
   100% {
     box-shadow: 0px 0px 1px 1px #00ff2a;
+    /* blur 20px + spread 6px */
+  }
+}
+
+@keyframes white-loop {
+  0% {
+    box-shadow: 0px 0px 17px 1px #fff;
+    /* blur 0 */
+  }
+
+  100% {
+    box-shadow: 0px 0px 1px 1px #fff;
+    /* blur 20px + spread 6px */
+  }
+}
+
+@keyframes red-loop {
+  0% {
+    box-shadow: 0px 0px 17px 1px #ff242f;
+    /* blur 0 */
+  }
+
+  100% {
+    box-shadow: 0px 0px 1px 1px #ff242f;
+    /* blur 20px + spread 6px */
+  }
+}
+
+@keyframes blue-loop {
+  0% {
+    box-shadow: 0px 0px 17px 1px #47c5ff;
+    /* blur 0 */
+  }
+
+  100% {
+    box-shadow: 0px 0px 1px 1px #47c5ff;
     /* blur 20px + spread 6px */
   }
 }

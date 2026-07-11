@@ -4,20 +4,109 @@ import { useEffect, useState } from 'react';
 import Label from './components/label';
 // import electronLogo from './assets/electron.svg'
 import Stack from '@mui/material/Stack';
+import { ConnectionDetails, ConnectionInfo } from 'src/utils/internet';
+
 
 function App(): React.JSX.Element {
+  const colors = {
+    white: "#fff",
+    green: "#00ff2a",
+    blue: "#47c5ff",
+    red: '#ff242f'
+  }
   // const ipcHandle = (): void => window.electron.ipcRenderer.send('ping')
   // const ipcPHandle = (): void => window.electron.ipcRenderer.send('proxy')
   const [maximize, setMaximize] = useState<'open' | 'close'>("open");
   const [enableProxy, setEnableProxy] = useState<boolean>();
+  const [internetStatus, setInternetStatus] = useState<'green' | 'blue' | 'red' | 'white'>('white');
   const [proxyServer, setProxyServer] = useState<string>("");
   const [dns, setDns] = useState<any[]>([]);
+  const [result, setResult] = useState<ConnectionInfo>();
 
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
 
   const toggle = () => setMaximize(prev => prev === 'open' ? 'close' : 'open');
 
+  const checkConnection = async (): Promise<void> => {
+    try {
+      console.log('calling check con func')
+      setError(null);
+      const result = await window.api.getConnectionInfo();
+      console.log('result', result)
+      setResult(result)
+
+      if (result.isConnected === false)
+        setInternetStatus('red')
+
+      if (result.isConnected === true)
+        setInternetStatus('green')
+
+      if (result.isConnected && result.hasVPN)
+        setInternetStatus('blue')
+
+      // setStatus(result);
+    } catch (err: any) {
+      setError(err.message || 'Failed to check connection');
+      console.error('Connection check error:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    // if (autoCheck) {
+    // checkConnection();
+
+    const intervalId = setInterval(checkConnection, 3000);
+    return () => clearInterval(intervalId);
+    // }
+
+    checkConnection();
+  }, []);
+
+  // Listen for monitoring updates
+  // useEffect(() => {
+  //   // if (autoCheck) {
+  //     const handleStatusUpdate = (data: { connected: boolean; details: any }) => {
+  //       console.log("data", data)
+  //       // setStatus(prev => ({
+  //       //   ...prev,
+  //       //   isConnected: data.connected,
+  //       //   latency: data.details?.details?.latency || null,
+  //       //   hasVPN: data.details?.details?.vpn?.hasVPN || false
+  //       // }));
+  //     };
+
+  //     window.api.onInternetStatus(handleStatusUpdate);
+
+  //     // Start monitoring
+  //     window.api.startMonitoring(5000);
+
+  //     return () => {
+  //       // window.api.stopMonitoring();
+  //     };
+  //   // }
+  // }, []);
+
   useEffect(() => {
     const getDns = async () => {
+
+      // const connectionStatus: ConnectionDetails = await window.api.checkInternet();
+      // console.log("window.api.isConnected", connectionStatus)
+      // console.log("window.api.isConnected", connectionStatus.hasInternet)
+
+      // if (connectionStatus.hasInternet && connectionStatus.details.vpn.hasVPN)
+      //   setInternetStatus('blue')
+
+      // if (connectionStatus.hasInternet === false)
+      //   setInternetStatus('red')
+
+      // if (connectionStatus.hasInternet === true)
+      //   setInternetStatus('green')
+
+      // console.log(colors[internetStatus])
+      // window.api.sendDeleteDns("sdf")
 
       // Proxy
       window.api.getProxy().then((data) => {
@@ -30,7 +119,7 @@ function App(): React.JSX.Element {
         setProxyServer(data)
       })
 
-      // 
+      // DNS
       window.api.getDns().then((data) => {
         // console.log(data)
         setDns(data)
@@ -41,7 +130,7 @@ function App(): React.JSX.Element {
     getDns();
 
     // هر ۳ ثانیه اجرا شود
-    const interval = setInterval(getDns, 1000);
+    const interval = setInterval(getDns, 3000);
 
     // پاک کردن تایمر
     return () => clearInterval(interval);
@@ -54,7 +143,8 @@ function App(): React.JSX.Element {
       // position: 'absolute',
       // overflow: 'hidden'
     }}>
-      <Box // className="widget"
+      <Box
+        className="widget"
         onMouseEnter={() => window.electron.ipcRenderer.send('not-clickable')}
         sx={{
           // width: 100, 
@@ -65,7 +155,7 @@ function App(): React.JSX.Element {
           // width: 240,
           // height: 400,
         }}>
-        <Box onClick={() => {
+        <Box className="nwidget" sx={{ width: 'fit-content', ml: 'auto', pr: 1 }} onClick={() => {
           console.log('asdsdfa >>>>')
           setMaximize(maximize === 'close' ? 'open' : 'close')
         }}>
@@ -105,10 +195,12 @@ function App(): React.JSX.Element {
             sx={{
               width: '16px',
               height: '16px',
-              bgcolor: '#00ff2a',
+              // bgcolor: '#00ff2a',
+              // bgcolor: '#00ff2a',
+              bgcolor: colors[internetStatus],
               borderRadius: 24,
-              boxShadow: '0px 0px 17px 1px #00ff2a',
-              animation: 'blur-loop 1.4s ease-in-out infinite alternate',
+              boxShadow: `0px 0px 17px 1px ${colors[internetStatus]}`,
+              animation: `${internetStatus}-loop 1.4s ease-in-out infinite alternate`,
               /* subtle extra glow for depth */
               transition: 'box-shadow 0.2s',
               pointerEvents: 'auto', // 👈 Force click events
@@ -136,13 +228,24 @@ function App(): React.JSX.Element {
           <Stack key={index} direction={'row'} sx={{ justifyContent: 'space-between', alignItems: 'center', width: 1 }}>
             <Box sx={{ fontSize: 16 }}>{item.name + ':'}</Box>
             <Box sx={{ display: 'flex', gap: 1 }}>
+              {item.dns.length === 0 && (<Label variant='filled' color='error'>not set</Label>)}
               {item.dns.map((dns, i) => (
                 <Box key={i} sx={{ fontSize: 12 }}>{dns}</Box>
               ))}
+              <Box sx={{ fontSize: 12 }}>❌</Box>
             </Box>
           </Stack>
         ))}
         <Box sx={{ width: 1, textAlign: 'center', bgcolor: '#2e2e2e', mt: 2 }}>VPN</Box>
+        <Stack direction={'row'} sx={{ justifyContent: 'space-between' }}>
+          <Box>Status:</Box>
+          <Box>
+            {(result?.hasVPN) ? <Label variant='filled' color='success'>ON</Label> : <Label variant='filled' color='error'>OFF</Label>}
+          </Box>
+        </Stack>
+        {result?.vpnInterfaces.map((inter: string) => (
+          <Label variant='soft' color='info' key={inter}>{inter}</Label>
+        ))}
         {/* <div className="action">
         <a target="_blank" rel="noreferrer" onClick={() => {
           window.api.getProxy().then((data) => {
