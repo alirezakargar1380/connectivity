@@ -41,19 +41,19 @@ const checker = new InternetConnectionChecker({
 });
 
 ipcMain.handle('check-internet', async () => {
-    try {
-        const result = await checker.checkConnection();
-        return result;
-    } catch (error: any) {
-        return {
-            hasInternet: false,
-            error: error.message
-        };
-    }
+  try {
+    const result = await checker.checkConnection();
+    return result;
+  } catch (error: any) {
+    return {
+      hasInternet: false,
+      error: error.message
+    };
+  }
 });
 
 ipcMain.handle('get-connection-info', async () => {
-    return await checker.getConnectionInfo();
+  return await checker.getConnectionInfo();
 });
 
 ipcMain.handle('is-connected', async () => {
@@ -69,13 +69,13 @@ ipcMain.handle('is-connected', async () => {
 });
 
 ipcMain.handle('start-monitoring', async (event, interval: number = 5000) => {
-    const stop = checker.monitorConnection(interval, (connected, details) => {
-        event.sender.send('internet-status', { connected, details });
-    });
-    
-    // Store the stop function to use later
-    // You might want to store this in a Map with the sender ID
-    return { success: true };
+  const stop = checker.monitorConnection(interval, (connected, details) => {
+    event.sender.send('internet-status', { connected, details });
+  });
+
+  // Store the stop function to use later
+  // You might want to store this in a Map with the sender ID
+  return { success: true };
 });
 
 
@@ -153,11 +153,14 @@ app.whenReady().then(() => {
   })
 
   // IPC test
-  ipcMain.on('ping', () => console.log('pong'))
+  ipcMain.on('ping', () => {
+    console.log('pong')
+    app.quit();
+  })
   ipcMain.on('clickable', () => {
     console.log('notttttttt clicable )))))))))))))))))')
     mainWindow.setIgnoreMouseEvents(true, { forward: true })
-})
+  })
   ipcMain.on('not-clickable', () => {
     console.log('clicable )))))))))))))))))')
     mainWindow.setIgnoreMouseEvents(false)

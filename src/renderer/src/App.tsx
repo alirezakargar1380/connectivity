@@ -33,36 +33,36 @@ function App(): React.JSX.Element {
   const toggle = () => setMaximize(prev => prev === 'open' ? 'close' : 'open');
 
   const checkConnection = async (): Promise<void> => {
-    // try {
-    //   console.log('calling check con func')
-    //   setError(null);
-    //   const result = await window.api.getConnectionInfo();
-    //   console.log('result', result)
-    //   setResult(result)
+    try {
+      console.log('calling check con func')
+      setError(null);
+      const result = await window.api.getConnectionInfo();
+      console.log('result', result)
+      setResult(result)
 
-    //   if (result.isConnected === false)
-    //     setInternetStatus('red')
+      if (result.isConnected === false)
+        setInternetStatus('red')
 
-    //   if (result.isConnected === true)
-    //     setInternetStatus('green')
+      if (result.isConnected === true)
+        setInternetStatus('green')
 
-    //   if (result.isConnected && result.hasVPN)
-    //     setInternetStatus('blue')
+      if (result.isConnected && result.hasVPN)
+        setInternetStatus('blue')
 
-    // } catch (err: any) {
-    //   setError(err.message || 'Failed to check connection');
-    //   console.error('Connection check error:', err);
-    // } finally {
-    //   setLoading(false);
-    // }
+    } catch (err: any) {
+      setError(err.message || 'Failed to check connection');
+      console.error('Connection check error:', err);
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
 
-    // const intervalId = setInterval(checkConnection, 8000);
-    // return () => clearInterval(intervalId);
+    const intervalId = setInterval(checkConnection, 8000);
+    return () => clearInterval(intervalId);
 
-    // checkConnection();
+    checkConnection();
   }, []);
 
   // Listen for monitoring updates
@@ -127,7 +127,7 @@ function App(): React.JSX.Element {
   }, []);
 
   useEffect(() => {
-    if (notif?.show === false) {
+    if (notif?.show === false && maximize === 'close') {
       setMaximize('open')
       setTimeout(() => {
         setMaximize('close')
@@ -177,6 +177,12 @@ function App(): React.JSX.Element {
           }}>
           ⭕
         </Box>
+        <Box
+          className="nwidget"
+          sx={{ width: 'fit-content', ml: 0.5 }}
+          onClick={() => window.electron.ipcRenderer.send('ping')}>
+          ❌
+        </Box>
       </Box>
       <Box sx={{
         padding: 2,
@@ -203,11 +209,9 @@ function App(): React.JSX.Element {
             let newStatus: any = maximize === 'close' ? 'open' : 'close';
             if (newStatus === 'open') window.electron.ipcRenderer.send('not-clickable')
             if (newStatus === 'close') window.electron.ipcRenderer.send('clickable')
-            // window.electron.ipcRenderer.send(maximize === 'open' ? 'clickable' : 'not-clickable')
-            // window.electron.ipcRenderer.send('not-clickable')
+
             setMaximize(newStatus)
           }}
-          // onClick={() => console.log('>>')}
           sx={{
             bgcolor: "#1f1f1f",
             pl: 2, pr: 1,
