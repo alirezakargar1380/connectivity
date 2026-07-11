@@ -31,11 +31,11 @@ function getDns(interfaceName: string): Promise<string[]> {
 }
 
 const checker = new InternetConnectionChecker({
-  timeout: 1000,
+  timeout: 4000,
   verbose: true,
   testUrls: [
     'https://www.google.com',
-    // 'https://www.cloudflare.com'
+    'https://www.cloudflare.com'
   ],
   // dnsServers: ['8.8.8.8']
 });
@@ -104,7 +104,7 @@ function createWindow(): void {
     // closable: false,
     transparent: true, // 👈 false
     // backgroundColor: '#141414', // 👈 SOLID color, NOT transparent!
-    // alwaysOnTop: false,
+    alwaysOnTop: true,
     // resizable: false,
     fullscreenable: false,
     autoHideMenuBar: true,
@@ -154,8 +154,14 @@ app.whenReady().then(() => {
 
   // IPC test
   ipcMain.on('ping', () => console.log('pong'))
-  ipcMain.on('clickable', () => mainWindow.setIgnoreMouseEvents(true, { forward: true }))
-  ipcMain.on('not-clickable', () => mainWindow.setIgnoreMouseEvents(false))
+  ipcMain.on('clickable', () => {
+    console.log('notttttttt clicable )))))))))))))))))')
+    mainWindow.setIgnoreMouseEvents(true, { forward: true })
+})
+  ipcMain.on('not-clickable', () => {
+    console.log('clicable )))))))))))))))))')
+    mainWindow.setIgnoreMouseEvents(false)
+  })
   ipcMain.handle('delete-dns', (event, interfaceName: string) => { console.log(interfaceName) })
   ipcMain.handle('proxy', () => {
     return new Promise((resolve, reject) => {

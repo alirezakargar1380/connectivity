@@ -1,11 +1,14 @@
 import { Box } from '@mui/material';
-import Versions from './components/Versions'
 import { useEffect, useState } from 'react';
 import Label from './components/label';
 // import electronLogo from './assets/electron.svg'
 import Stack from '@mui/material/Stack';
-import { ConnectionDetails, ConnectionInfo } from 'src/utils/internet';
+import { ConnectionInfo } from 'src/utils/internet';
 
+interface Notification {
+  show: boolean
+  text: string
+}
 
 function App(): React.JSX.Element {
   const colors = {
@@ -17,11 +20,12 @@ function App(): React.JSX.Element {
   // const ipcHandle = (): void => window.electron.ipcRenderer.send('ping')
   // const ipcPHandle = (): void => window.electron.ipcRenderer.send('proxy')
   const [maximize, setMaximize] = useState<'open' | 'close'>("open");
-  const [enableProxy, setEnableProxy] = useState<boolean>();
+  const [enableProxy, setEnableProxy] = useState<boolean>(false);
   const [internetStatus, setInternetStatus] = useState<'green' | 'blue' | 'red' | 'white'>('white');
   const [proxyServer, setProxyServer] = useState<string>("");
   const [dns, setDns] = useState<any[]>([]);
   const [result, setResult] = useState<ConnectionInfo>();
+  const [notif, setNotif] = useState<Notification>();
 
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
@@ -29,40 +33,36 @@ function App(): React.JSX.Element {
   const toggle = () => setMaximize(prev => prev === 'open' ? 'close' : 'open');
 
   const checkConnection = async (): Promise<void> => {
-    try {
-      console.log('calling check con func')
-      setError(null);
-      const result = await window.api.getConnectionInfo();
-      console.log('result', result)
-      setResult(result)
+    // try {
+    //   console.log('calling check con func')
+    //   setError(null);
+    //   const result = await window.api.getConnectionInfo();
+    //   console.log('result', result)
+    //   setResult(result)
 
-      if (result.isConnected === false)
-        setInternetStatus('red')
+    //   if (result.isConnected === false)
+    //     setInternetStatus('red')
 
-      if (result.isConnected === true)
-        setInternetStatus('green')
+    //   if (result.isConnected === true)
+    //     setInternetStatus('green')
 
-      if (result.isConnected && result.hasVPN)
-        setInternetStatus('blue')
+    //   if (result.isConnected && result.hasVPN)
+    //     setInternetStatus('blue')
 
-      // setStatus(result);
-    } catch (err: any) {
-      setError(err.message || 'Failed to check connection');
-      console.error('Connection check error:', err);
-    } finally {
-      setLoading(false);
-    }
+    // } catch (err: any) {
+    //   setError(err.message || 'Failed to check connection');
+    //   console.error('Connection check error:', err);
+    // } finally {
+    //   setLoading(false);
+    // }
   };
 
   useEffect(() => {
-    // if (autoCheck) {
+
+    // const intervalId = setInterval(checkConnection, 8000);
+    // return () => clearInterval(intervalId);
+
     // checkConnection();
-
-    const intervalId = setInterval(checkConnection, 3000);
-    return () => clearInterval(intervalId);
-    // }
-
-    checkConnection();
   }, []);
 
   // Listen for monitoring updates
@@ -92,26 +92,16 @@ function App(): React.JSX.Element {
   useEffect(() => {
     const getDns = async () => {
 
-      // const connectionStatus: ConnectionDetails = await window.api.checkInternet();
-      // console.log("window.api.isConnected", connectionStatus)
-      // console.log("window.api.isConnected", connectionStatus.hasInternet)
-
-      // if (connectionStatus.hasInternet && connectionStatus.details.vpn.hasVPN)
-      //   setInternetStatus('blue')
-
-      // if (connectionStatus.hasInternet === false)
-      //   setInternetStatus('red')
-
-      // if (connectionStatus.hasInternet === true)
-      //   setInternetStatus('green')
-
-      // console.log(colors[internetStatus])
-      // window.api.sendDeleteDns("sdf")
-
       // Proxy
       window.api.getProxy().then((data) => {
         // console.log("proxy: ", data)
         if (data === true || data === false) setEnableProxy(data)
+        if (enableProxy === false && data === true) {
+          setNotif({
+            show: false,
+            text: 'PAY ATTENTION: you set a proxy on youre netword!'
+          })
+        }
       });
 
       // Proxy Server
@@ -130,11 +120,31 @@ function App(): React.JSX.Element {
     getDns();
 
     // هر ۳ ثانیه اجرا شود
-    const interval = setInterval(getDns, 3000);
+    const interval = setInterval(getDns, 1000);
 
     // پاک کردن تایمر
     return () => clearInterval(interval);
   }, []);
+
+  useEffect(() => {
+    if (notif?.show === false) {
+      setMaximize('open')
+      setTimeout(() => {
+        setMaximize('close')
+      }, 5000)
+      setTimeout(() => {
+        setNotif({
+          ...notif,
+          show: true
+        })
+      }, 6000)
+    }
+  }, [notif])
+
+  // useEffect(() => {
+  //   if (maximize === 'open')
+  //     window.electron.ipcRenderer.send('not-clickable')
+  // }, [maximize])
 
   return (
     <Box sx={{
@@ -145,20 +155,26 @@ function App(): React.JSX.Element {
     }}>
       <Box
         className="widget"
-        onMouseEnter={() => window.electron.ipcRenderer.send('not-clickable')}
+        onMouseEnter={() => {
+          console.log('on mouse enter header')
+          window.electron.ipcRenderer.send('not-clickable')
+        }}
         sx={{
           // width: 100, 
           bgcolor: '#c7c7c7',
           textAlign: 'right', pr: 1, py: 0.25,
-          display: maximize === 'open' ? '' : 'none',
+          display: maximize === 'open' ? 'flex' : 'none',
+          justifyContent: 'end'
           // pointerEvents: maximize === 'open' ? 'auto' : 'none',
           // width: 240,
           // height: 400,
         }}>
-        <Box className="nwidget" sx={{ width: 'fit-content', ml: 'auto', pr: 1 }} onClick={() => {
-          console.log('asdsdfa >>>>')
-          setMaximize(maximize === 'close' ? 'open' : 'close')
-        }}>
+        <Box className="nwidget"
+          sx={{ width: 'fit-content' }}
+          onClick={() => {
+            console.log('asdsdfa >>>>')
+            setMaximize(maximize === 'close' ? 'open' : 'close')
+          }}>
           ⭕
         </Box>
       </Box>
@@ -166,7 +182,16 @@ function App(): React.JSX.Element {
         padding: 2,
         bgcolor: '#141414e0',
         borderRadius: 4,
-        clipPath: maximize === 'open' ? 'circle(150% at 210px 30px);' : 'circle(8% at 212px 30px);',
+        clipPath: (maximize === 'open') ? 'circle(150% at 210px 30px);' : 'circle(8% at 208px 30px);',
+        // ...(notif?.show === false) && {
+        //   clipPath: 'circle(150% at 210px 30px);',
+        // },
+        // ...(maximize === 'open') && {
+        //   clipPath: 'circle(150% at 210px 30px);',
+        // },
+        // ...(maximize === 'close') && {
+        //   clipPath: 'circle(8% at 208px 30px);',
+        // },
         transition: 'clip-path .9s ease',
         // width: 50, 
         // overflow: 'hidden',
@@ -175,22 +200,32 @@ function App(): React.JSX.Element {
 
         <Box
           onClick={() => {
-
+            let newStatus: any = maximize === 'close' ? 'open' : 'close';
+            if (newStatus === 'open') window.electron.ipcRenderer.send('not-clickable')
+            if (newStatus === 'close') window.electron.ipcRenderer.send('clickable')
             // window.electron.ipcRenderer.send(maximize === 'open' ? 'clickable' : 'not-clickable')
             // window.electron.ipcRenderer.send('not-clickable')
-            setMaximize(maximize === 'close' ? 'open' : 'close')
+            setMaximize(newStatus)
           }}
           // onClick={() => console.log('>>')}
-          sx={{ bgcolor: "#1f1f1f", pl: 2, pr: 1, textAlign: 'center', py: 0.5, borderRadius: 4, display: 'flex', mb: 1, justifyContent: 'space-between', alignItems: 'center' }}>
+          sx={{
+            bgcolor: "#1f1f1f",
+            pl: 2, pr: 1,
+            textAlign: 'center', py: 0.5,
+            borderRadius: 4, display: 'flex', mb: 1,
+            justifyContent: 'space-between',
+            alignItems: 'center'
+          }}
+        >
           <Box sx={{ fontSize: 12 }}>CONNECTION STATUS:</Box>
           <Box
             onMouseEnter={() => {
-              console.log('enter')
-              window.electron.ipcRenderer.send('not-clickable')
+              if (maximize !== "open")
+                window.electron.ipcRenderer.send('not-clickable')
             }}
             onMouseLeave={() => {
-              window.electron.ipcRenderer.send('clickable')
-              console.log('out')
+              if (maximize !== "open")
+                window.electron.ipcRenderer.send('clickable')
             }}
             sx={{
               width: '16px',
@@ -210,6 +245,9 @@ function App(): React.JSX.Element {
             }}
           />
         </Box>
+        {notif?.show === false && (
+          <Box sx={{ bgcolor: '#ffa600', p: 0.5, fontSize: 12, color: 'black' }}>{notif?.text}</Box>
+        )}
         <Box sx={{ width: 1, textAlign: 'center', bgcolor: '#2e2e2e', mt: 2, mb: 0.5 }}>PROXY</Box>
         <Stack direction={'column'} sx={{ alignItems: 'center', justifyContent: 'start', width: 1 }}>
           <Stack direction={'row'} sx={{ width: 1, justifyContent: 'space-between', alignItems: 'center' }}>
