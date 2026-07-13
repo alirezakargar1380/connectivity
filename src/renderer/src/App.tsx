@@ -6,7 +6,9 @@ import Stack from '@mui/material/Stack';
 import { ConnectionInfo } from 'src/utils/internet';
 import SvgColor from './components/svg-color';
 
-import computerProtection from '@renderer/assets/icons/computer.svg'
+import computerIcon from '@renderer/assets/icons/computer.svg?url';
+import internetIcon from '@renderer/assets/icons/internet.svg?url';
+import vpnIcon from '@renderer/assets/icons/vpn.svg?url';
 
 interface Notification {
   show: boolean
@@ -76,10 +78,10 @@ function App(): React.JSX.Element {
         // console.log("proxy: ", data)
         if (data === true || data === false) setEnableProxy(data)
         if (enableProxy === false && data === true) {
-          // setNotif({
-          //   show: false,
-          //   text: 'PAY ATTENTION: you set a proxy on youre netword!'
-          // })
+          setNotif({
+            show: false,
+            text: 'PAY ATTENTION: you set a proxy on youre netword!'
+          })
         }
       });
 
@@ -103,7 +105,7 @@ function App(): React.JSX.Element {
 
     // پاک کردن تایمر
     return () => clearInterval(interval);
-  }, []);
+  }, [enableProxy]);
 
   useEffect(() => {
     if (notif?.show === false && maximize === 'close') {
@@ -243,7 +245,8 @@ function App(): React.JSX.Element {
         {/* ==================== PROXY ==================== */}
         <Box sx={{ bgcolor: '#fff', p: '16px', borderRadius: '16px' }}>
           <Box sx={{ width: 1, textAlign: 'left', mb: 0.5, color: 'black', fontFamily: 'ur-medium', fontSize: '16px', display: 'flex', alignItems: 'center', gap: 1 }}>
-            <SvgColor src={'/src/assets/icons/computer.svg'} sx={{ width: 40, height: 40, }} />
+            {/* <SvgColor src={computerIcon} sx={{ width: 40, height: 40, }} /> */}
+            <img src={computerIcon} alt="computer" width={40} height={40} />
             <Box>Proxy</Box>
           </Box>
 
@@ -269,7 +272,8 @@ function App(): React.JSX.Element {
         {/* ==================== DNS ==================== */}
         <Box sx={{ bgcolor: '#fff', p: '16px', borderRadius: '16px', mt: 2 }}>
           <Box sx={{ width: 1, textAlign: 'left', mb: 0.5, color: 'black', fontFamily: 'ur-medium', fontSize: '16px', display: 'flex', alignItems: 'center', gap: 1 }}>
-            <SvgColor src={'/src/assets/icons/internet.svg'} sx={{ width: 40, height: 40, }} />
+            {/* <SvgColor src={'/src/assets/internet.svg'} sx={{ width: 40, height: 40, }} /> */}
+            <img src={internetIcon} alt="computer" width={40} height={40} />
             <Box>DNS</Box>
           </Box>
 
@@ -293,7 +297,8 @@ function App(): React.JSX.Element {
         {/* ==================== VPN ==================== */}
         <Box sx={{ bgcolor: '#fff', p: '16px', borderRadius: '16px', mt: 2 }}>
           <Box sx={{ width: 1, textAlign: 'left', mb: 0.5, color: 'black', fontFamily: 'ur-medium', fontSize: '16px', display: 'flex', alignItems: 'center', gap: 1 }}>
-            <SvgColor src={'/src/assets/icons/vpn.svg'} sx={{ width: 40, height: 40, }} />
+            {/* <SvgColor src={'/src/assets/vpn.svg'} sx={{ width: 40, height: 40, }} /> */}
+            <img src={vpnIcon} alt="computer" width={40} height={40} />
             <Box>VPN</Box>
           </Box>
 
