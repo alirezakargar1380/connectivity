@@ -43,10 +43,10 @@ function App(): React.JSX.Element {
 
   const checkConnection = async (): Promise<void> => {
     try {
-      console.log('calling check con func')
+      console.log('called check connection')
       setError(null);
       const result = await window.api.getConnectionInfo();
-      console.log('result', result)
+      // console.log('result', result)
       setResult(result)
 
       if (result.isConnected === false)
@@ -55,7 +55,7 @@ function App(): React.JSX.Element {
       if (result.isConnected === true)
         setInternetStatus('green')
 
-      if (result.isConnected && result.hasVPN)
+      if ((result.isConnected && result.hasVPN) || (result.isConnected && enableProxy))
         setInternetStatus('blue')
 
     } catch (err: any) {
@@ -72,14 +72,14 @@ function App(): React.JSX.Element {
     const intervalId = setInterval(checkConnection, 3000);
     return () => clearInterval(intervalId);
 
-  }, []);
+  }, [enableProxy]);
 
 
   const internetUsage = () => {
     // Network Usage
     window.api.getUsage().then((data) => {
       setNetUsage(data)
-      console.log('network usage', data)
+      // console.log('network usage', data)
     });
   }
 
@@ -90,12 +90,15 @@ function App(): React.JSX.Element {
 
   useEffect(() => {
     const getDns = async () => {
+      console.log('called interet settings')
       counter++
       if (counter % 3 === 0) {
         // Proxy
         window.api.getProxy().then((data) => {
           // console.log("proxy: ", data)
-          if (data === true || data === false) setEnableProxy(data)
+          if (data === true || data === false)
+            setEnableProxy(data)
+
           if (enableProxy === false && data === true) {
             setNotif({
               show: false,
@@ -113,11 +116,19 @@ function App(): React.JSX.Element {
         })
       }
 
-      if (counter % 6 === 0) {
+      if (counter % 7 === 0) {
         // DNS
         window.api.getDns().then((data) => {
           // console.log(data)
           setDns(data)
+          const text = 'YOUR SET A DNS ON YOUR NETWORK!, IF YOU DISCONNECT FROM INTERNET, CHECK YOUR DNS SETTINGS!'
+          if (data.length > 0 && notif?.text !== text) {
+            setNotif({
+              show: false,
+              text
+            })
+          }
+
         });
       }
 
@@ -131,7 +142,7 @@ function App(): React.JSX.Element {
 
     // پاک کردن تایمر
     return () => clearInterval(interval);
-  }, [enableProxy]);
+  }, [enableProxy, notif]);
 
   useEffect(() => {
     if (notif?.show === false && maximize === 'close') {

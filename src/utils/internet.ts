@@ -88,8 +88,8 @@ export class InternetConnectionChecker {
     private testUrls: string[];
     private dnsServers: string[];
     private verbose: boolean;
-    private proxy: string;
     private interfaces: NetworkInterfacesResult;
+    private vpn: VPNResult
 
     constructor(options: InternetCheckerOptions = {}) {
         this.timeout = options.timeout || 5000;
@@ -102,11 +102,14 @@ export class InternetConnectionChecker {
         ];
         this.dnsServers = options.dnsServers || ['8.8.8.8', '1.1.1.1', '9.9.9.9'];
         this.verbose = options.verbose || false;
-        this.proxy = '';
         this.interfaces = {
             interfaces: [],
             checked: false,
             success: false
+        }
+        this.vpn = {
+            hasVPN: false,
+            interfaces: []
         }
 
         // Check network interfaces first
@@ -179,24 +182,24 @@ export class InternetConnectionChecker {
                 const controller = new AbortController();
                 const timeoutId = setTimeout(() => controller.abort(), this.timeout);
 
-                const vpn = this.detectVPN();
-
                 const proxyAddress: string | null = await this.getProxyAddress();
                 const isProxyEnable: boolean = await this.checkEnableProxy();
+
+                const condition = (isProxyEnable && proxyAddress !== null)
 
                 const response = await fetch(url, {
                     method: 'HEAD',
                     signal: controller.signal,
                     // set proxy to check request if user set a proxy
-                    ...((isProxyEnable && proxyAddress !== null && vpn.hasVPN === false) && {
-                        dispatcher: new ProxyAgent(proxyAddress)
+                    ...(condition && {
+                        dispatcher: new ProxyAgent('http://'+proxyAddress)
                     })
                 });
 
                 clearTimeout(timeoutId);
                 const latency = Date.now() - startTime;
 
-                log.info('response', response)
+                log.info('response', response, condition, url)
 
                 return {
                     success: response.ok || response.status === 200,
@@ -451,8 +454,8 @@ export class InternetConnectionChecker {
         }
 
         // Detect VPN
-        const vpn = this.detectVPN();
-        results.details.vpn = vpn;
+        this.vpn = this.detectVPN();
+        results.details.vpn = this.vpn;
 
         // Try multiple methods
         const methodTests: Array<{
